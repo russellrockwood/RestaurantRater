@@ -15,7 +15,7 @@ namespace RestaurantRater.Controllers
         private readonly RestaurantDbContext _context = new RestaurantDbContext();
 
         [HttpPost]
-        public async Task<IHttpActionResult> PostRestaurant([FromBody]Restaurant model)
+        public async Task<IHttpActionResult> PostRestaurant([FromBody] Restaurant model)
         {
             if (model is null)
                 return BadRequest("Request body cannot be empty.");
@@ -35,11 +35,11 @@ namespace RestaurantRater.Controllers
         {
             List<Restaurant> restaurants = await _context.Restaurants.ToListAsync();
             return Ok(restaurants);
-            
-        } 
+
+        }
 
         [HttpGet]
-        public async Task<IHttpActionResult> GetById([FromUri]int id)
+        public async Task<IHttpActionResult> GetById([FromUri] int id)
         {
             Restaurant restaurant = await _context.Restaurants.FindAsync(id);
 
@@ -47,8 +47,42 @@ namespace RestaurantRater.Controllers
                 return Ok(restaurant);
 
             return NotFound();
-        } 
+        }
 
+        [HttpPut]
+        public async Task<IHttpActionResult> UpdateRestaurant([FromUri] int id, [FromBody] Restaurant updatedRestaurant)
+        {
+            if (id != updatedRestaurant?.Id)
+                return BadRequest("Ids do not match.");
 
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            Restaurant restaurantToUpdate = await _context.Restaurants.FindAsync(id);
+
+            if (restaurantToUpdate == null)
+                return NotFound();
+
+            restaurantToUpdate.Name = updatedRestaurant.Name;
+            restaurantToUpdate.Address = updatedRestaurant.Address;
+            restaurantToUpdate.Rating = updatedRestaurant.Rating;
+
+            _context.Restaurants.Add(restaurantToUpdate);
+            await _context.SaveChangesAsync();
+            return Ok("Restaurant was updated");
+        }
+
+        [HttpDelete]
+        public async Task<IHttpActionResult> DeleteRestaurant([FromUri] int id)
+        {
+            Restaurant restaurant = await _context.Restaurants.FindAsync(id);
+
+            if (restaurant == null)
+                return NotFound();
+
+            _context.Restaurants.Remove(restaurant);
+            await _context.SaveChangesAsync();
+            return Ok("Restaurant deleted");
+        }
     }
 }
